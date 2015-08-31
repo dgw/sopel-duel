@@ -15,7 +15,10 @@ def duel(bot, trigger):
     target = tools.Identifier(trigger.group(3) or None)
     if not target:
         bot.reply("Who did you want to duel?")
-        return
+        return module.NOLIMIT
+    if target == bot.nick:
+        bot.say("I refuse to duel with the yeller-bellied likes of you!")
+        return module.NOLIMIT
     bot.say("%s vs. %s, loser gets kicked!" % (trigger.nick, target))
     combatants = [trigger.nick, target]
     random.shuffle(combatants)
