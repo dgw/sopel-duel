@@ -19,6 +19,9 @@ def duel(bot, trigger):
     if target == bot.nick:
         bot.say("I refuse to duel with the yeller-bellied likes of you!")
         return module.NOLIMIT
+    if target.lower() not in bot.privileges[trigger.sender.lower()]:
+        bot.say("You can't duel people who don't exist!")
+        return module.NOLIMIT
     bot.say("%s vs. %s, loser gets kicked!" % (trigger.nick, target))
     combatants = [trigger.nick, target]
     random.shuffle(combatants)
