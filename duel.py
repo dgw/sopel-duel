@@ -6,12 +6,19 @@ Copyright 2015 dgw
 from __future__ import division
 from willie import module, tools
 import random
+import time
+
+
+TIMEOUT = 600
 
 
 @module.commands('duel')
 @module.require_chanmsg
-@module.rate(600)
 def duel(bot, trigger):
+    time_since = time_since_duel(bot, trigger.nick)
+    if time_since_duel(bot, trigger.nick) < TIMEOUT:
+        bot.notice("You must wait %d seconds until your next duel." % (TIMEOUT - time_since), trigger.nick)
+        return module.NOLIMIT
     target = tools.Identifier(trigger.group(3) or None)
     if not target:
         bot.reply("Who did you want to duel?")
@@ -30,6 +37,7 @@ def duel(bot, trigger):
     bot.say("%s wins!" % winner)
     if bot.privileges[trigger.sender.lower()][bot.nick.lower()] >= module.OP:
         bot.write(['KICK', trigger.sender, loser], "You done got yerself killed!")
+    bot.db.set_nick_value(trigger.nick, 'duel_last', time.time())
     duel_finished(bot, winner, loser)
 
 
@@ -46,6 +54,12 @@ def get_duels(bot, nick):
     wins = bot.db.get_nick_value(nick, 'duel_wins') or 0
     losses = bot.db.get_nick_value(nick, 'duel_losses') or 0
     return wins, losses
+
+
+def time_since_duel(bot, nick):
+    now = time.time()
+    last = bot.db.get_nick_value(nick, 'duel_last') or 0
+    return abs(now - last)
 
 
 def update_duels(bot, nick, won=False):
