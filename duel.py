@@ -16,7 +16,7 @@ TIMEOUT = 600
 @module.require_chanmsg
 def duel(bot, trigger):
     time_since = time_since_duel(bot, trigger.nick)
-    if time_since_duel(bot, trigger.nick) < TIMEOUT:
+    if time_since < TIMEOUT:
         bot.notice("You must wait %d seconds until your next duel." % (TIMEOUT - time_since), trigger.nick)
         return module.NOLIMIT
     target = tools.Identifier(trigger.group(3) or None)
