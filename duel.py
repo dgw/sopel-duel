@@ -19,7 +19,10 @@ def duel(bot, trigger):
     if time_since < TIMEOUT:
         bot.notice("You must wait %d seconds until your next duel." % (TIMEOUT - time_since), trigger.nick)
         return module.NOLIMIT
-    target = tools.Identifier(trigger.group(3) or None)
+    try:
+        target = tools.Identifier(trigger.group(3))
+    except AttributeError:
+        target = None
     if not target:
         bot.reply("Who did you want to duel?")
         return module.NOLIMIT
