@@ -27,7 +27,7 @@ def duel(bot, trigger):
         bot.say("I refuse to duel with the yeller-bellied likes of you!")
         return module.NOLIMIT
     if target == trigger.nick:
-        if bot.db.get_channel_value(trigger.sender, 'enable_duel_self'):
+        if get_self_duels(bot, trigger.sender):
             bot.say("You can't duel yourself, you coward!")
             return module.NOLIMIT
     if target.lower() not in bot.privileges[trigger.sender.lower()]:
@@ -57,14 +57,14 @@ def duels(bot, trigger):
 @module.commands('duelselfon')
 @module.require_chanmsg
 def duel_self_yes(bot, trigger):
-    bot.db.set_channel_value(trigger.sender, 'enable_duel_self', True)
+    set_self_duels(bot, trigger.sender, True)
     bot.say("Self-duels are now enabled in %s." % trigger.sender)
 
 
 @module.commands('duelselfoff')
 @module.require_chanmsg
 def duel_self_no(bot, trigger):
-    bot.db.set_channel_value(trigger.sender, 'enable_duel_self', False)
+    set_self_duels(bot, trigger.sender, False)
     bot.say("Self-duels are now disabled in %s." % trigger.sender)
 
 
@@ -72,6 +72,10 @@ def get_duels(bot, nick):
     wins = bot.db.get_nick_value(nick, 'duel_wins') or 0
     losses = bot.db.get_nick_value(nick, 'duel_losses') or 0
     return wins, losses
+
+
+def get_self_duels(bot, channel):
+    return bot.db.get_channel_value(channel, 'enable_duel_self') or False
 
 
 def time_since_duel(bot, nick):
@@ -86,6 +90,10 @@ def update_duels(bot, nick, won=False):
         bot.db.set_nick_value(nick, 'duel_wins', wins + 1)
     else:
         bot.db.set_nick_value(nick, 'duel_losses', losses + 1)
+
+
+def set_self_duels(bot, channel, status=True):
+    bot.db.set_channel_value(channel, 'enable_duel_self', status)
 
 
 def duel_finished(bot, winner, loser):
