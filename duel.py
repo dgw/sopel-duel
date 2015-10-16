@@ -8,7 +8,6 @@ from willie import module, tools
 import random
 import time
 
-
 TIMEOUT = 600
 
 
@@ -54,18 +53,35 @@ def duels(bot, trigger):
     bot.say("%s has won %d out of %d duels (%.2f%%)." % (target, wins, total, win_rate))
 
 
+@module.commands('duelself')
+@module.require_chanmsg
+def duel_self(bot, trigger, enable=None):
+    if enable is None:  # Called directly, so parse expected argument
+        if trigger.group(3).lower() == 'on':
+            enable = True
+        elif trigger.group(3).lower() == 'off':
+            enable = False
+        else:
+            bot.reply("Invalid self-duel setting. Valid values: 'on', 'off'.")
+            return module.NOLIMIT
+    if enable:
+        pfx = 'en'
+    else:
+        pfx = 'dis'
+    set_self_duels(bot, trigger.sender, enable)
+    bot.say("Self-duels are now %sabled in %s." % (pfx, trigger.sender))
+
+
 @module.commands('duelselfon')
 @module.require_chanmsg
 def duel_self_yes(bot, trigger):
-    set_self_duels(bot, trigger.sender, True)
-    bot.say("Self-duels are now enabled in %s." % trigger.sender)
+    duel_self(bot, trigger, True)
 
 
 @module.commands('duelselfoff')
 @module.require_chanmsg
 def duel_self_no(bot, trigger):
-    set_self_duels(bot, trigger.sender, False)
-    bot.say("Self-duels are now disabled in %s." % trigger.sender)
+    duel_self(bot, trigger, False)
 
 
 def get_duels(bot, nick):
