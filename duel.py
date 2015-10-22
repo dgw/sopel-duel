@@ -39,7 +39,11 @@ def duel(bot, trigger):
     loser = combatants.pop()
     bot.say("%s wins!" % winner)
     if bot.privileges[trigger.sender.lower()][bot.nick.lower()] >= module.OP:
-        bot.write(['KICK', trigger.sender, loser], "You done got yerself killed!")
+        if loser == target:
+            msg = "%s done killed ya!" % trigger.nick
+        else:
+            msg = "You done got yerself killed!"
+        bot.write(['KICK', trigger.sender, loser], msg)
     bot.db.set_nick_value(trigger.nick, 'duel_last', time.time())
     duel_finished(bot, winner, loser)
 
