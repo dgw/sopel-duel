@@ -60,6 +60,11 @@ def duels(bot, trigger):
 @module.commands('duelself')
 @module.require_chanmsg
 def duel_self(bot, trigger, enable=None):
+    arg = trigger.group(3) or None
+    if not arg:  # return current setting
+        enable = get_self_duels(bot, trigger.sender)
+        bot.say("Self-duels are %s in %s." % ("enabled" if enable else "disabled", trigger.sender))
+        return module.NOLIMIT
     if not trigger.admin and bot.privileges[trigger.sender.lower()][trigger.nick.lower()] < module.ADMIN:
         bot.reply("Only channel admins can change this setting.")
         return
