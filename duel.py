@@ -53,6 +53,9 @@ def duels(bot, trigger):
     target = trigger.group(3) or trigger.nick
     wins, losses = get_duels(bot, target)
     total = wins + losses
+    if not total:
+        bot.say("%s has no duel record!" % target)
+        return module.NOLIMIT
     win_rate = wins / total * 100
     bot.say("%s has won %d out of %d duels (%.2f%%)." % (target, wins, total, win_rate))
 
