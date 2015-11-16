@@ -26,7 +26,7 @@ def duel(bot, trigger):
         bot.say("I refuse to duel with the yeller-bellied likes of you!")
         return module.NOLIMIT
     if target == trigger.nick:
-        if get_self_duels(bot, trigger.sender):
+        if not get_self_duels(bot, trigger.sender):
             bot.say("You can't duel yourself, you coward!")
             return module.NOLIMIT
     if target.lower() not in bot.privileges[trigger.sender.lower()]:
