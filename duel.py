@@ -70,11 +70,12 @@ def duel_self(bot, trigger, enable=None):
         return module.NOLIMIT
     if not trigger.admin and bot.privileges[trigger.sender.lower()][trigger.nick.lower()] < module.ADMIN:
         bot.reply("Only channel admins can change this setting.")
-        return
+        return module.NOLIMIT
     if enable is None:  # Called directly, so parse expected argument
-        if trigger.group(3).lower() == 'on':
+        arg = arg.lower()
+        if arg == 'on':
             enable = True
-        elif trigger.group(3).lower() == 'off':
+        elif arg == 'off':
             enable = False
         else:
             bot.reply("Invalid self-duel setting. Valid values: 'on', 'off'.")
