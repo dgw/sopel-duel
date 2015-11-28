@@ -62,7 +62,7 @@ def duels(bot, trigger):
 
 @module.commands('duelself')
 @module.require_chanmsg
-def duel_self(bot, trigger, enable=None):
+def duel_self(bot, trigger):
     arg = trigger.group(3) or None
     if not arg:  # return current setting
         enable = get_self_duels(bot, trigger.sender)
@@ -71,33 +71,18 @@ def duel_self(bot, trigger, enable=None):
     if not trigger.admin and bot.privileges[trigger.sender.lower()][trigger.nick.lower()] < module.ADMIN:
         bot.reply("Only channel admins can change this setting.")
         return module.NOLIMIT
-    if enable is None:  # Called directly, so parse expected argument
-        arg = arg.lower()
-        if arg == 'on':
-            enable = True
-        elif arg == 'off':
-            enable = False
-        else:
-            bot.reply("Invalid self-duel setting. Valid values: 'on', 'off'.")
-            return module.NOLIMIT
-    if enable:
-        pfx = 'en'
+    # parse expected argument
+    arg = arg.lower()
+    if arg == 'on':
+        enable = True
+    elif arg == 'off':
+        enable = False
     else:
-        pfx = 'dis'
+        bot.reply("Invalid self-duel setting. Valid values: 'on', 'off'.")
+        return module.NOLIMIT
+    pfx = 'en' if enable else 'dis'
     set_self_duels(bot, trigger.sender, enable)
     bot.say("Self-duels are now %sabled in %s." % (pfx, trigger.sender))
-
-
-@module.commands('duelselfon')
-@module.require_chanmsg
-def duel_self_yes(bot, trigger):
-    duel_self(bot, trigger, True)
-
-
-@module.commands('duelselfoff')
-@module.require_chanmsg
-def duel_self_no(bot, trigger):
-    duel_self(bot, trigger, False)
 
 
 def get_duels(bot, nick):
