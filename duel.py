@@ -14,9 +14,9 @@ TIMEOUT = 600
 @module.commands('duel')
 @module.require_chanmsg
 def duel(bot, trigger):
-    time_since = time_since_duel(bot, trigger.nick)
+    time_since = time_since_duel(bot, trigger)
     if time_since < TIMEOUT:
-        bot.notice("You must wait %d seconds until your next duel." % (TIMEOUT - time_since), trigger.nick)
+        bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), trigger.nick)
         return module.NOLIMIT
     target = tools.Identifier(trigger.group(3) or '')
     if not target:
@@ -44,7 +44,9 @@ def duel(bot, trigger):
         else:
             msg = "You done got yerself killed!"
         bot.write(['KICK', trigger.sender, loser], msg)
-    bot.db.set_nick_value(trigger.nick, 'duel_last', time.time())
+    now = time.time()
+    bot.db.set_nick_value(trigger.nick, 'duel_last', now)
+    bot.db.set_channel_value(trigger.sender, 'duel_last', now)
     duel_finished(bot, winner, loser)
 
 
@@ -60,13 +62,27 @@ def duels(bot, trigger):
     bot.say("%s has won %d out of %d duels (%.2f%%)." % (target, wins, total, win_rate))
 
 
-@module.commands('duelself')
+@module.commands('duelself', 'duelcw')
 @module.require_chanmsg
-def duel_self(bot, trigger):
+def duel_setting(bot, trigger):
+    cmd = trigger.group(1) or None
     arg = trigger.group(3) or None
+    if cmd == 'duelself':
+        setting = 'self-duel'
+    elif cmd == 'duelcw':
+        setting = 'channel-wide duel'
+    else:
+        bot.reply("Unknown setting command %s, exiting. Please report this to my owner." % cmd)
+        return module.NOLIMIT
     if not arg:  # return current setting
-        enable = get_self_duels(bot, trigger.sender)
-        bot.say("Self-duels are %s in %s." % ("enabled" if enable else "disabled", trigger.sender))
+        if cmd == 'duelself':
+            enable = get_self_duels(bot, trigger.sender)
+        elif cmd == 'duelcw':
+            enable = get_duel_chanwide(bot, trigger.sender)
+        else:  # this is already caught above, but this else keeps PyCharm happy
+            bot.reply("Unknown setting %s, exiting. Please report this to my owner." % cmd)
+            return module.NOLIMIT
+        bot.say("%ss are %s in %s." % (setting.capitalize(), "enabled" if enable else "disabled", trigger.sender))
         return module.NOLIMIT
     if not trigger.admin and bot.privileges[trigger.sender.lower()][trigger.nick.lower()] < module.ADMIN:
         bot.reply("Only channel admins can change this setting.")
@@ -78,11 +94,14 @@ def duel_self(bot, trigger):
     elif arg == 'off':
         enable = False
     else:
-        bot.reply("Invalid self-duel setting. Valid values: 'on', 'off'.")
+        bot.reply("Invalid %s setting. Valid values: 'on', 'off'." % setting)
         return module.NOLIMIT
     pfx = 'en' if enable else 'dis'
-    set_self_duels(bot, trigger.sender, enable)
-    bot.say("Self-duels are now %sabled in %s." % (pfx, trigger.sender))
+    if cmd == 'duelself':
+        set_self_duels(bot, trigger.sender, enable)
+    elif cmd == 'duelcw':
+        set_duel_chanwide(bot, trigger.sender, enable)
+    bot.say("%ss are now %sabled in %s." % (setting.capitalize(), pfx, trigger.sender))
 
 
 def get_duels(bot, nick):
@@ -95,9 +114,16 @@ def get_self_duels(bot, channel):
     return bot.db.get_channel_value(channel, 'enable_duel_self') or False
 
 
-def time_since_duel(bot, nick):
+def get_duel_chanwide(bot, channel):
+    return bot.db.get_channel_value(channel, 'duel_chanwide') or False
+
+
+def time_since_duel(bot, trigger):
     now = time.time()
-    last = bot.db.get_nick_value(nick, 'duel_last') or 0
+    if get_duel_chanwide(bot, trigger.sender):
+        last = bot.db.get_channel_value(trigger.sender, 'duel_last') or 0
+    else:
+        last = bot.db.get_nick_value(trigger.nick, 'duel_last') or 0
     return abs(now - last)
 
 
@@ -111,6 +137,10 @@ def update_duels(bot, nick, won=False):
 
 def set_self_duels(bot, channel, status=True):
     bot.db.set_channel_value(channel, 'enable_duel_self', status)
+
+
+def set_duel_chanwide(bot, channel, status=False):
+    bot.db.set_channel_value(channel, 'duel_chanwide', status)
 
 
 def duel_finished(bot, winner, loser):
