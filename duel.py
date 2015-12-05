@@ -14,10 +14,6 @@ TIMEOUT = 600
 @module.commands('duel')
 @module.require_chanmsg
 def duel(bot, trigger):
-    time_since = time_since_duel(bot, trigger)
-    if time_since < TIMEOUT:
-        bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), trigger.nick)
-        return module.NOLIMIT
     target = tools.Identifier(trigger.group(3) or '')
     if not target:
         bot.reply("Who did you want to duel?")
@@ -31,6 +27,10 @@ def duel(bot, trigger):
             return module.NOLIMIT
     if target.lower() not in bot.privileges[trigger.sender.lower()]:
         bot.say("You can't duel people who don't exist!")
+        return module.NOLIMIT
+    time_since = time_since_duel(bot, trigger)
+    if time_since < TIMEOUT:
+        bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), trigger.nick)
         return module.NOLIMIT
     bot.say("%s vs. %s, loser gets kicked!" % (trigger.nick, target))
     combatants = [trigger.nick, target]
