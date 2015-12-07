@@ -33,7 +33,8 @@ def duel(bot, trigger):
         bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), trigger.nick)
         return module.NOLIMIT
     bot.say("%s vs. %s, loser gets kicked!" % (trigger.nick, target))
-    combatants = [trigger.nick, target]
+    combatants = sorted([trigger.nick, target])
+    random.shuffle(combatants)
     random.shuffle(combatants)
     winner = combatants.pop()
     loser = combatants.pop()
