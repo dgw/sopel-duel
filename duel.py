@@ -35,7 +35,6 @@ def duel(bot, trigger):
     bot.say("%s vs. %s, loser gets kicked!" % (trigger.nick, target))
     combatants = sorted([trigger.nick, target])
     random.shuffle(combatants)
-    random.shuffle(combatants)
     winner = combatants.pop()
     loser = combatants.pop()
     bot.say("%s wins!" % winner)
