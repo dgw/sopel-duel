@@ -32,18 +32,23 @@ def duel(bot, trigger):
     if time_since < TIMEOUT:
         bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), trigger.nick)
         return module.NOLIMIT
-    bot.say("%s vs. %s, loser gets kicked!" % (trigger.nick, target))
+    kicking = kicking_available(bot, trigger)
+    msg = "%s vs. %s" % (trigger.nick, target)
+    msg += ", loser gets kicked!" if kicking else ", loser's a yeller belly!"
+    bot.say(msg)
     combatants = sorted([trigger.nick, target])
     random.shuffle(combatants)
     winner = combatants.pop()
     loser = combatants.pop()
     bot.say("%s wins!" % winner)
-    if bot.privileges[trigger.sender.lower()][bot.nick.lower()] >= module.OP:
-        if loser == target:
-            msg = "%s done killed ya!" % trigger.nick
-        else:
-            msg = "You done got yerself killed!"
-        bot.write(['KICK', trigger.sender, loser], msg)
+    if loser == target:
+        kmsg = "%s done killed ya!" % trigger.nick
+    else:
+        kmsg = "You done got yerself killed!"
+    if kicking:
+        bot.write(['KICK', trigger.sender, loser], kmsg)
+    else:
+        bot.say(kmsg[:-1] + ", " + loser + kmsg[-1:])
     now = time.time()
     bot.db.set_nick_value(trigger.nick, 'duel_last', now)
     bot.db.set_channel_value(trigger.sender, 'duel_last', now)
@@ -146,3 +151,7 @@ def set_duel_chanwide(bot, channel, status=False):
 def duel_finished(bot, winner, loser):
     update_duels(bot, winner, True)
     update_duels(bot, loser, False)
+
+
+def kicking_available(bot, trigger):
+    return bot.privileges[trigger.sender.lower()][bot.nick.lower()] >= module.OP
