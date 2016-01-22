@@ -21,7 +21,7 @@ def duel(bot, trigger):
     if target == bot.nick:
         bot.say("I refuse to duel with the yeller-bellied likes of you!")
         return module.NOLIMIT
-    if target == trigger.nick or bot.db.get_nick_id(trigger.nick, False) == bot.db.get_nick_id(target, False):
+    if is_self(bot, trigger.nick, target):
         if not get_self_duels(bot, trigger.sender):
             bot.say("You can't duel yourself, you coward!")
             return module.NOLIMIT
@@ -113,6 +113,19 @@ def get_duels(bot, nick):
     wins = bot.db.get_nick_value(nick, 'duel_wins') or 0
     losses = bot.db.get_nick_value(nick, 'duel_losses') or 0
     return wins, losses
+
+
+def is_self(bot, nick, target):
+    nick = tools.Identifier(nick)
+    target = tools.Identifier(target)
+    if nick == target:
+        return True  # shortcut to catch common goofballs
+    try:
+        nick_id = bot.db.get_nick_id(nick, False)
+        target_id = bot.db.get_nick_id(target, False)
+    except ValueError:
+        return False  # if either nick doesn't have an ID, they can't be in a group
+    return nick_id == target_id
 
 
 def get_self_duels(bot, channel):
