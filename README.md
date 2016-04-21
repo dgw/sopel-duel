@@ -1,4 +1,4 @@
-# willie-duel
+# sopel-duel
 Clone of a mIRC script that lets users duel each other
 
 ## Commands & Settings

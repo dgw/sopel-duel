@@ -4,7 +4,7 @@ Copyright 2015 dgw
 """
 
 from __future__ import division
-from willie import module, tools
+from sopel import module, tools
 import random
 import time
 
