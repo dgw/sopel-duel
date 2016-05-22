@@ -33,8 +33,8 @@ def duel(bot, trigger):
         bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), trigger.nick)
         return module.NOLIMIT
     kicking = kicking_available(bot, trigger)
-    msg = "%s vs. %s" % (trigger.nick, target)
-    msg += ", loser gets kicked!" if kicking else ", loser's a yeller belly!"
+    msg = "%s vs. %s, " % (trigger.nick, target)
+    msg += "loser gets kicked!" if kicking else "loser's a yeller belly!"
     bot.say(msg)
     combatants = sorted([trigger.nick, target])
     random.shuffle(combatants)
