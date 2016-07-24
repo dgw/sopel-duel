@@ -18,6 +18,9 @@ def duel(bot, trigger):
     if not target:
         bot.reply("Who did you want to duel?")
         return module.NOLIMIT
+    if get_unduelable(bot, trigger.nick):
+        bot.say("Try again when you're duelable, %s." % trigger.nick)
+        return module.NOLIMIT
     if target == bot.nick:
         bot.say("I refuse to duel with the yeller-bellied likes of you!")
         return module.NOLIMIT
@@ -27,6 +30,9 @@ def duel(bot, trigger):
             return module.NOLIMIT
     if target.lower() not in bot.privileges[trigger.sender.lower()]:
         bot.say("You can't duel people who don't exist!")
+        return module.NOLIMIT
+    if get_unduelable(bot, target):
+        bot.say("You SHALL NOT duel %s!" % target)
         return module.NOLIMIT
     time_since = time_since_duel(bot, trigger)
     if time_since < TIMEOUT:
@@ -65,6 +71,45 @@ def duels(bot, trigger):
         return module.NOLIMIT
     win_rate = wins / total * 100
     bot.say("%s has won %d out of %d duels (%.2f%%)." % (target, wins, total, win_rate))
+
+
+@module.commands('dueloff')
+@module.example(".dueloff")
+def exclude(bot, trigger):
+    """
+    Disable other users' ability to duel you (admins: or another user)
+    """
+    if not trigger.group(3):
+        target = trigger.nick
+        time_since = time_since_duel(bot, trigger)
+        if time_since < TIMEOUT:
+            bot.notice("You must wait %.0f seconds before disabling duels, because you recently initiated a duel."
+                       % (TIMEOUT - time_since), target)
+            return
+    else:
+        target = tools.Identifier(trigger.group(3))
+    if not trigger.admin and target != trigger.nick:
+        bot.say("Only bot admins can mark other users as unduelable.")
+        return
+    set_unduelable(bot, target, True)
+    bot.say("Disabled duels for %s." % target)
+
+
+@module.commands('duelon')
+@module.example(".duelon")
+def unexclude(bot, trigger):
+    """
+    Re-enable other users' ability to duel you (admins: or another user)
+    """
+    if not trigger.group(3):
+        target = trigger.nick
+    else:
+        target = tools.Identifier(trigger.group(3))
+    if not trigger.admin and target != trigger.nick:
+        bot.say("Only bot admins can mark other users as duelable.")
+        return
+    set_unduelable(bot, target, False)
+    bot.say("Enabled duels for %s." % target)
 
 
 @module.commands('duelself', 'duelcw')
@@ -128,6 +173,10 @@ def is_self(bot, nick, target):
     return nick_id == target_id
 
 
+def get_unduelable(bot, nick):
+    return bot.db.get_nick_value(nick, 'unduelable') or False
+
+
 def get_self_duels(bot, channel):
     return bot.db.get_channel_value(channel, 'enable_duel_self') or False
 
@@ -151,6 +200,10 @@ def update_duels(bot, nick, won=False):
         bot.db.set_nick_value(nick, 'duel_wins', wins + 1)
     else:
         bot.db.set_nick_value(nick, 'duel_losses', losses + 1)
+
+
+def set_unduelable(bot, nick, status=False):
+    bot.db.set_nick_value(nick, 'unduelable', status)
 
 
 def set_self_duels(bot, channel, status=True):
