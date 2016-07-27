@@ -122,7 +122,7 @@ def duel_setting(bot, trigger):
     elif cmd == 'duelcw':
         setting = 'channel-wide duel'
     else:
-        bot.reply("Unknown setting command %s, exiting. Please report this to my owner." % cmd)
+        bot.reply("Unknown setting command %s, exiting. Please report this to %s." % (cmd, bot.config.core.owner))
         return module.NOLIMIT
     if not arg:  # return current setting
         if cmd == 'duelself':
@@ -130,7 +130,7 @@ def duel_setting(bot, trigger):
         elif cmd == 'duelcw':
             enable = get_duel_chanwide(bot, trigger.sender)
         else:  # this is already caught above, but this else keeps PyCharm happy
-            bot.reply("Unknown setting %s, exiting. Please report this to my owner." % cmd)
+            bot.reply("Unknown setting command %s, exiting. Please report this to %s." % (cmd, bot.config.core.owner))
             return module.NOLIMIT
         bot.say("%ss are %s in %s." % (setting.capitalize(), "enabled" if enable else "disabled", trigger.sender))
         return module.NOLIMIT
