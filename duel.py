@@ -18,7 +18,7 @@ def duel(bot, trigger):
     if not target:
         bot.reply("Who did you want to duel?")
         return module.NOLIMIT
-    if get_unduelable(bot, trigger.nick):
+    if get_unduelable(bot, trigger.nick) and not trigger.admin:
         bot.say("Try again when you're duelable, %s." % trigger.nick)
         return module.NOLIMIT
     if target == bot.nick:
