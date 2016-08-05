@@ -112,7 +112,7 @@ def unexclude(bot, trigger):
     bot.say("Enabled duels for %s." % target)
 
 
-@module.commands('duelself', 'duelcw')
+@module.commands('duelself', 'duelcw', 'duelkick', 'duelkicks')
 @module.require_chanmsg
 def duel_setting(bot, trigger):
     cmd = trigger.group(1) or None
@@ -121,6 +121,8 @@ def duel_setting(bot, trigger):
         setting = 'self-duel'
     elif cmd == 'duelcw':
         setting = 'channel-wide duel'
+    elif cmd == 'duelkick' or cmd == 'duelkicks':
+        setting = 'duel kick'
     else:
         bot.reply("Unknown setting command %s, exiting. Please report this to %s." % (cmd, bot.config.core.owner))
         return module.NOLIMIT
@@ -129,6 +131,8 @@ def duel_setting(bot, trigger):
             enable = get_self_duels(bot, trigger.sender)
         elif cmd == 'duelcw':
             enable = get_duel_chanwide(bot, trigger.sender)
+        elif cmd == 'duelkick' or cmd == 'duelkicks':
+            enable = get_duel_kicks(bot, trigger.sender)
         else:  # this is already caught above, but this else keeps PyCharm happy
             bot.reply("Unknown setting command %s, exiting. Please report this to %s." % (cmd, bot.config.core.owner))
             return module.NOLIMIT
@@ -151,6 +155,8 @@ def duel_setting(bot, trigger):
         set_self_duels(bot, trigger.sender, enable)
     elif cmd == 'duelcw':
         set_duel_chanwide(bot, trigger.sender, enable)
+    elif cmd == 'duelkick' or cmd == 'duelkicks':
+        set_duel_kicks(bot, trigger.sender, enable)
     bot.say("%ss are now %sabled in %s." % (setting.capitalize(), pfx, trigger.sender))
 
 
@@ -185,6 +191,11 @@ def get_duel_chanwide(bot, channel):
     return bot.db.get_channel_value(channel, 'duel_chanwide') or False
 
 
+def get_duel_kicks(bot, channel):
+    kicks = bot.db.get_channel_value(channel, 'duel_kicks')
+    return True if kicks is None else kicks
+
+
 def time_since_duel(bot, trigger):
     now = time.time()
     if get_duel_chanwide(bot, trigger.sender):
@@ -214,10 +225,14 @@ def set_duel_chanwide(bot, channel, status=False):
     bot.db.set_channel_value(channel, 'duel_chanwide', status)
 
 
+def set_duel_kicks(bot, channel, status=True):
+    bot.db.set_channel_value(channel, 'duel_kicks', status)
+
+
 def duel_finished(bot, winner, loser):
     update_duels(bot, winner, True)
     update_duels(bot, loser, False)
 
 
 def kicking_available(bot, trigger):
-    return bot.privileges[trigger.sender.lower()][bot.nick.lower()] >= module.OP
+    return get_duel_kicks(bot, trigger.sender) and bot.privileges[trigger.sender.lower()][bot.nick.lower()] >= module.OP
