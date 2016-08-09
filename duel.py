@@ -31,13 +31,16 @@ def duel(bot, trigger):
     if target.lower() not in bot.privileges[trigger.sender.lower()]:
         bot.say("You can't duel people who don't exist!")
         return module.NOLIMIT
-    if get_unduelable(bot, target) and not trigger.admin:
+    target_unduelable = get_unduelable(bot, target)
+    if target_unduelable and not trigger.admin:
         bot.say("You SHALL NOT duel %s!" % target)
         return module.NOLIMIT
     time_since = time_since_duel(bot, trigger)
     if time_since < TIMEOUT:
         bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), trigger.nick)
         return module.NOLIMIT
+    if trigger.admin and target_unduelable:
+        bot.notice("Just so you know, %s is marked as unduelable.", trigger.nick)
     kicking = kicking_available(bot, trigger)
     msg = "%s vs. %s, " % (trigger.nick, target)
     msg += "loser gets kicked!" if kicking else "loser's a yeller belly!"
