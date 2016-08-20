@@ -54,7 +54,7 @@ def duel(bot, trigger):
         kmsg = "%s done killed ya!" % trigger.nick
     else:
         kmsg = "You done got yerself killed!"
-    if kicking:
+    if kicking and not target_unduelable:
         bot.write(['KICK', trigger.sender, loser], kmsg)
     else:
         bot.say(kmsg[:-1] + ", " + loser + kmsg[-1:])
