@@ -40,7 +40,7 @@ def duel(bot, trigger):
         bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), trigger.nick)
         return module.NOLIMIT
     if trigger.admin and target_unduelable:
-        bot.notice("Just so you know, %s is marked as unduelable.", trigger.nick)
+        bot.notice("Just so you know, %s is marked as unduelable." % target, trigger.nick)
     kicking = kicking_available(bot, trigger)
     msg = "%s vs. %s, " % (trigger.nick, target)
     msg += "loser gets kicked!" if kicking else "loser's a yeller belly!"
