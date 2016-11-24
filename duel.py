@@ -13,54 +13,58 @@ TIMEOUT = 600
 
 @module.commands('duel')
 @module.require_chanmsg
-def duel(bot, trigger):
-    target = tools.Identifier(trigger.group(3) or '')
+def duel_cmd(bot, trigger):
+    return duel(bot, trigger.sender, trigger.nick, trigger.group(3) or '', is_admin=trigger.admin)
+
+
+def duel(bot, channel, instigator, target, is_admin=False):
+    target = tools.Identifier(target or '')
     if not target:
         bot.reply("Who did you want to duel?")
         return module.NOLIMIT
-    if get_unduelable(bot, trigger.nick):
-        bot.say("Try again when you're duelable, %s." % trigger.nick)
+    if get_unduelable(bot, instigator):
+        bot.say("Try again when you're duelable, %s." % instigator)
         return module.NOLIMIT
     if target == bot.nick:
         bot.say("I refuse to duel with the yeller-bellied likes of you!")
         return module.NOLIMIT
-    if is_self(bot, trigger.nick, target):
-        if not get_self_duels(bot, trigger.sender):
+    if is_self(bot, instigator, target):
+        if not get_self_duels(bot, channel):
             bot.say("You can't duel yourself, you coward!")
             return module.NOLIMIT
-    if target.lower() not in bot.privileges[trigger.sender.lower()]:
+    if target.lower() not in bot.privileges[channel.lower()]:
         bot.say("You can't duel people who don't exist!")
         return module.NOLIMIT
     target_unduelable = get_unduelable(bot, target)
-    if target_unduelable and not trigger.admin:
+    if target_unduelable and not is_admin:
         bot.say("You SHALL NOT duel %s!" % target)
         return module.NOLIMIT
-    time_since = time_since_duel(bot, trigger)
+    time_since = time_since_duel(bot, channel, instigator)
     if time_since < TIMEOUT:
-        bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), trigger.nick)
+        bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), instigator)
         return module.NOLIMIT
-    if trigger.admin and target_unduelable:
-        bot.notice("Just so you know, %s is marked as unduelable." % target, trigger.nick)
-    kicking = kicking_available(bot, trigger)
-    msg = "%s vs. %s, " % (trigger.nick, target)
+    if is_admin and target_unduelable:
+        bot.notice("Just so you know, %s is marked as unduelable." % target, instigator)
+    kicking = kicking_available(bot, channel)
+    msg = "%s vs. %s, " % (instigator, target)
     msg += "loser gets kicked!" if kicking else "loser's a yeller belly!"
     bot.say(msg)
-    combatants = sorted([trigger.nick, target])
+    combatants = sorted([instigator, target])
     random.shuffle(combatants)
     winner = combatants.pop()
     loser = combatants.pop()
     bot.say("%s wins!" % winner)
     if loser == target:
-        kmsg = "%s done killed ya!" % trigger.nick
+        kmsg = "%s done killed ya!" % instigator
     else:
         kmsg = "You done got yerself killed!"
     if kicking and not target_unduelable:
-        bot.write(['KICK', trigger.sender, loser], kmsg)
+        bot.write(['KICK', channel, loser], kmsg)
     else:
         bot.say(kmsg[:-1] + ", " + loser + kmsg[-1:])
     now = time.time()
-    bot.db.set_nick_value(trigger.nick, 'duel_last', now)
-    bot.db.set_channel_value(trigger.sender, 'duel_last', now)
+    bot.db.set_nick_value(instigator, 'duel_last', now)
+    bot.db.set_channel_value(channel, 'duel_last', now)
     duel_finished(bot, winner, loser)
 
 
@@ -84,7 +88,7 @@ def exclude(bot, trigger):
     """
     if not trigger.group(3):
         target = trigger.nick
-        time_since = time_since_duel(bot, trigger)
+        time_since = time_since_duel(bot, trigger.sender, target)
         if time_since < TIMEOUT:
             bot.notice("You must wait %.0f seconds before disabling duels, because you recently initiated a duel."
                        % (TIMEOUT - time_since), target)
@@ -199,12 +203,12 @@ def get_duel_kicks(bot, channel):
     return True if kicks is None else kicks
 
 
-def time_since_duel(bot, trigger):
+def time_since_duel(bot, channel, nick):
     now = time.time()
-    if get_duel_chanwide(bot, trigger.sender):
-        last = bot.db.get_channel_value(trigger.sender, 'duel_last') or 0
+    if get_duel_chanwide(bot, channel):
+        last = bot.db.get_channel_value(channel, 'duel_last') or 0
     else:
-        last = bot.db.get_nick_value(trigger.nick, 'duel_last') or 0
+        last = bot.db.get_nick_value(nick, 'duel_last') or 0
     return abs(now - last)
 
 
@@ -237,5 +241,5 @@ def duel_finished(bot, winner, loser):
     update_duels(bot, loser, False)
 
 
-def kicking_available(bot, trigger):
-    return get_duel_kicks(bot, trigger.sender) and bot.privileges[trigger.sender.lower()][bot.nick.lower()] >= module.OP
+def kicking_available(bot, channel):
+    return get_duel_kicks(bot, channel) and bot.privileges[channel.lower()][bot.nick.lower()] >= module.OP
