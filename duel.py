@@ -17,7 +17,14 @@ def duel_cmd(bot, trigger):
     return duel(bot, trigger.sender, trigger.nick, trigger.group(3) or '', is_admin=trigger.admin)
 
 
-def duel(bot, channel, instigator, target, is_admin=False):
+@module.rule('^(?:fight|duel)s(?:\s+with)?\s+([a-zA-Z0-9\[\]\\`_\^\{\|\}-]{1,32}).*')
+@module.intent('ACTION')
+@module.require_chanmsg
+def duel_action(bot, trigger):
+    return duel(bot, trigger.sender, trigger.nick, trigger.group(1), is_admin=trigger.admin, warn_nonexistent=False)
+
+
+def duel(bot, channel, instigator, target, is_admin=False, warn_nonexistent=True):
     target = tools.Identifier(target or '')
     if not target:
         bot.reply("Who did you want to duel?")
@@ -33,7 +40,8 @@ def duel(bot, channel, instigator, target, is_admin=False):
             bot.say("You can't duel yourself, you coward!")
             return module.NOLIMIT
     if target.lower() not in bot.privileges[channel.lower()]:
-        bot.say("You can't duel people who don't exist!")
+        if warn_nonexistent:
+            bot.say("You can't duel people who don't exist!")
         return module.NOLIMIT
     target_unduelable = get_unduelable(bot, target)
     if target_unduelable and not is_admin:
