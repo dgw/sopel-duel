@@ -96,7 +96,7 @@ def exclude(bot, trigger):
     """
     if not trigger.group(3):
         target = trigger.nick
-        time_since = time_since_duel(bot, trigger.sender, target)
+        time_since = time_since_duel(bot, trigger.sender, target, nick_only=True)
         if time_since < TIMEOUT:
             bot.notice("You must wait %.0f seconds before disabling duels, because you recently initiated a duel."
                        % (TIMEOUT - time_since), target)
@@ -211,9 +211,9 @@ def get_duel_kicks(bot, channel):
     return True if kicks is None else kicks
 
 
-def time_since_duel(bot, channel, nick):
+def time_since_duel(bot, channel, nick, nick_only=False):
     now = time.time()
-    if get_duel_chanwide(bot, channel):
+    if not nick_only and get_duel_chanwide(bot, channel):
         last = bot.db.get_channel_value(channel, 'duel_last') or 0
     else:
         last = bot.db.get_nick_value(nick, 'duel_last') or 0
