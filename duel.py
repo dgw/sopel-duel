@@ -96,16 +96,18 @@ def exclude(bot, trigger):
     """
     if not trigger.group(3):
         target = trigger.nick
+    else:
+        target = tools.Identifier(trigger.group(3))
+        if not trigger.admin and target != trigger.nick:
+            bot.say("Only bot admins can mark other users as unduelable.")
+            return
+    if target == trigger.nick:
         time_since = time_since_duel(bot, trigger.sender, target, nick_only=True)
         if time_since < TIMEOUT:
             bot.notice("You must wait %.0f seconds before disabling duels, because you recently initiated a duel."
                        % (TIMEOUT - time_since), target)
             return
-    else:
-        target = tools.Identifier(trigger.group(3))
-    if not trigger.admin and target != trigger.nick:
-        bot.say("Only bot admins can mark other users as unduelable.")
-        return
+    # Getting this far means all checks passed
     set_unduelable(bot, target, True)
     bot.say("Disabled duels for %s." % target)
 
