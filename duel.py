@@ -10,6 +10,10 @@ import time
 
 TIMEOUT = 600
 
+WINS = 'win'
+LOSSES = 'lose'
+NONE = None
+
 
 @module.commands('duel')
 @module.require_chanmsg
@@ -84,8 +88,28 @@ def duels(bot, trigger):
     if not total:
         bot.say("%s has no duel record!" % target)
         return module.NOLIMIT
+
+    # what a mess streak handling turned out to be
+    streak_type = get_streak_type(bot, target)
+    streak_count = record_streak = record_adj = None
+    if streak_type == WINS:
+        streak_count = get_win_streak(bot, target)
+        streak_type = 'win' if streak_count == 1 else 'wins'
+        record_streak = get_best_win_streak(bot, target)
+        record_adj = 'best'
+    elif streak_type == LOSSES:
+        streak_count = get_loss_streak(bot, target)
+        streak_type = 'loss' if streak_count == 1 else 'losses'
+        record_streak = get_worst_loss_streak(bot, target)
+        record_adj = 'worst'
+    if not streak_count:
+        streak = ''
+    else:
+        streak = ' Current streak: %d %s (%s: %d)' % (streak_count, streak_type, record_adj, record_streak)
+
     win_rate = wins / total * 100
-    bot.say("%s has won %d out of %d duels (%.2f%%)." % (target, wins, total, win_rate))
+
+    bot.say("%s has won %d out of %d duels (%.2f%%).%s" % (target, wins, total, win_rate, streak))
 
 
 @module.commands('dueloff')
@@ -183,6 +207,78 @@ def get_duels(bot, nick):
     return wins, losses
 
 
+def get_streak_type(bot, nick):
+    return bot.db.get_nick_value(nick, 'duel_streak_cur') or NONE
+
+
+def set_streak_type(bot, nick, t):
+    if t not in [WINS, LOSSES]:
+        raise ValueError("Cannot set unsupported streak type %s." % t)
+    bot.db.set_nick_value(nick, 'duel_streak_cur', t)
+
+
+def get_win_streak(bot, nick):
+    return bot.db.get_nick_value(nick, 'duel_wins_streak') or 0
+
+
+def set_win_streak(bot, nick, value):
+    if value < 0:
+        value = 0
+    bot.db.set_nick_value(nick, 'duel_wins_streak', value)
+
+
+def extend_win_streak(bot, nick):
+    new_streak = get_win_streak(bot, nick) + 1
+    set_win_streak(bot, nick, new_streak)
+    if new_streak > get_best_win_streak(bot, nick):
+        set_best_win_streak(bot, nick, new_streak)
+
+
+def reset_win_streak(bot, nick):
+    set_win_streak(bot, nick, 0)
+
+
+def get_loss_streak(bot, nick):
+    return bot.db.get_nick_value(nick, 'duel_losses_streak') or 0
+
+
+def set_loss_streak(bot, nick, value):
+    if value < 0:
+        value = 0
+    bot.db.set_nick_value(nick, 'duel_losses_streak', value)
+
+
+def extend_loss_streak(bot, nick):
+    new_streak = get_loss_streak(bot, nick) + 1
+    set_loss_streak(bot, nick, new_streak)
+    if new_streak > get_worst_loss_streak(bot, nick):
+        set_worst_loss_streak(bot, nick, new_streak)
+
+
+def reset_loss_streak(bot, nick):
+    set_loss_streak(bot, nick, 0)
+
+
+def get_best_win_streak(bot, nick):
+    return bot.db.get_nick_value(nick, 'duel_wins_streak_record') or 0
+
+
+def set_best_win_streak(bot, nick, value):
+    if value < 0:
+        value = 0
+    bot.db.set_nick_value(nick, 'duel_wins_streak_record', value)
+
+
+def get_worst_loss_streak(bot, nick):
+    return bot.db.get_nick_value(nick, 'duel_losses_streak_record') or 0
+
+
+def set_worst_loss_streak(bot, nick, value):
+    if value < 0:
+        value = 0
+    bot.db.set_nick_value(nick, 'duel_losses_streak_record', value)
+
+
 def is_self(bot, nick, target):
     nick = tools.Identifier(nick)
     target = tools.Identifier(target)
@@ -226,8 +322,14 @@ def update_duels(bot, nick, won=False):
     wins, losses = get_duels(bot, nick)
     if won:
         bot.db.set_nick_value(nick, 'duel_wins', wins + 1)
+        reset_loss_streak(bot, nick)
+        set_streak_type(bot, nick, WINS)
+        extend_win_streak(bot, nick)
     else:
         bot.db.set_nick_value(nick, 'duel_losses', losses + 1)
+        reset_win_streak(bot, nick)
+        set_streak_type(bot, nick, LOSSES)
+        extend_loss_streak(bot, nick)
 
 
 def set_unduelable(bot, nick, status=False):
