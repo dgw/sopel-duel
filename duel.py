@@ -65,7 +65,13 @@ def duel(bot, channel, instigator, target, is_admin=False, warn_nonexistent=True
     random.shuffle(combatants)
     winner = combatants.pop()
     loser = combatants.pop()
-    bot.say("%s wins!" % winner)
+    now = time.time()
+    bot.db.set_nick_value(instigator, 'duel_last', now)
+    bot.db.set_channel_value(channel, 'duel_last', now)
+    duel_finished(bot, winner, loser)
+    win_streak = get_win_streak(bot, winner)
+    streak = ' (Streak: %d)' % win_streak if win_streak > 1 else ''
+    bot.say("%s wins!%s" % (winner, streak))
     if loser == target:
         kmsg = "%s done killed ya!" % instigator
     else:
@@ -74,10 +80,6 @@ def duel(bot, channel, instigator, target, is_admin=False, warn_nonexistent=True
         bot.write(['KICK', channel, loser], kmsg)
     else:
         bot.say(kmsg[:-1] + ", " + loser + kmsg[-1:])
-    now = time.time()
-    bot.db.set_nick_value(instigator, 'duel_last', now)
-    bot.db.set_channel_value(channel, 'duel_last', now)
-    duel_finished(bot, winner, loser)
 
 
 @module.commands('duels')
