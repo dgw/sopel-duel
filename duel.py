@@ -90,28 +90,30 @@ def duels(bot, trigger):
     if not total:
         bot.say("%s has no duel record!" % target)
         return module.NOLIMIT
+    streaks = format_streaks(bot, target)
+    win_rate = wins / total * 100
+    bot.say("%s has won %d out of %d duels (%.2f%%).%s" % (target, wins, total, win_rate, streaks))
 
-    # what a mess streak handling turned out to be
-    streak_type = get_streak_type(bot, target)
+
+def format_streaks(bot, nick):
+    # this started as a mess, and it only got messier from there
+    streak_type = get_streak_type(bot, nick)
     streak_count = record_streak = record_adj = None
     if streak_type == WINS:
-        streak_count = get_win_streak(bot, target)
+        streak_count = get_win_streak(bot, nick)
         streak_type = 'win' if streak_count == 1 else 'wins'
-        record_streak = get_best_win_streak(bot, target)
+        record_streak = get_best_win_streak(bot, nick)
         record_adj = 'best'
     elif streak_type == LOSSES:
-        streak_count = get_loss_streak(bot, target)
+        streak_count = get_loss_streak(bot, nick)
         streak_type = 'loss' if streak_count == 1 else 'losses'
-        record_streak = get_worst_loss_streak(bot, target)
+        record_streak = get_worst_loss_streak(bot, nick)
         record_adj = 'worst'
     if not streak_count:
-        streak = ''
+        streaks = ''
     else:
-        streak = ' Current streak: %d %s (%s: %d)' % (streak_count, streak_type, record_adj, record_streak)
-
-    win_rate = wins / total * 100
-
-    bot.say("%s has won %d out of %d duels (%.2f%%).%s" % (target, wins, total, win_rate, streak))
+        streaks = ' Current streak: %d %s (%s: %d)' % (streak_count, streak_type, record_adj, record_streak)
+    return streaks
 
 
 @module.commands('dueloff')
