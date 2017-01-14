@@ -92,27 +92,46 @@ def duels(bot, trigger):
         return module.NOLIMIT
     streaks = format_streaks(bot, target)
     win_rate = wins / total * 100
-    bot.say("%s has won %d out of %d duels (%.2f%%).%s" % (target, wins, total, win_rate, streaks))
+    bot.say("%s has won %d out of %d duels (%.2f%%), %s" % (target, wins, total, win_rate, streaks))
 
 
 def format_streaks(bot, nick):
     # this started as a mess, and it only got messier from there
+    streaks = ''
+
+    # current streak
     streak_type = get_streak_type(bot, nick)
-    streak_count = record_streak = record_adj = None
     if streak_type == WINS:
         streak_count = get_win_streak(bot, nick)
+        streak_preposition = 'and'
         streak_type = 'win' if streak_count == 1 else 'wins'
-        record_streak = get_best_win_streak(bot, nick)
-        record_adj = 'best'
     elif streak_type == LOSSES:
         streak_count = get_loss_streak(bot, nick)
+        streak_preposition = 'but'
         streak_type = 'loss' if streak_count == 1 else 'losses'
-        record_streak = get_worst_loss_streak(bot, nick)
-        record_adj = 'worst'
-    if not streak_count:
-        streaks = ''
     else:
-        streaks = ' Current streak: %d %s (%s: %d)' % (streak_count, streak_type, record_adj, record_streak)
+        return 'but has no streaks recorded yet.'
+    if streak_count > 1:
+        streaks += '%s is riding a streak of %d %s.' % (streak_preposition, streak_count, streak_type)
+    elif streak_count == 1:
+        streaks += 'but can only hope %sto start a %s streak.' % (
+            'not ' if streak_type == 'loss' else '', 'winning' if streak_type == 'win' else 'losing')
+    else:
+        streaks += 'and has not achieved even a single %s? o_O' % streak_type
+        return streaks
+
+    # best/worst streaks
+    best_wins = get_best_win_streak(bot, nick)
+    worst_losses = get_worst_loss_streak(bot, nick)
+    if best_wins or worst_losses:
+        streaks += ' ('
+        if best_wins and worst_losses:
+            streaks += 'Best winning streak: %d; worst losing streak: %d.' % (best_wins, worst_losses)
+        elif best_wins and not worst_losses:
+            streaks += 'Best winning streak: %d.' % best_wins
+        elif not best_wins and worst_losses:
+            streaks += 'Worst losing streak: %d.' % worst_losses
+        streaks += ')'
     return streaks
 
 
