@@ -7,6 +7,8 @@ Clone of a mIRC script that lets users duel each other
 * `duels`: Get duel stats for yourself (no argument) or another user (`.duels someone`)
 * `duelcw`: Lets channel admins turn on or off channel-wide duel rate-limiting instead of
             rate limiting individual users (e.g. `.duelcw on`)
+* `duelkick`: Lets channel admins set whether losing a duel kicks the loser from the channel
+              (e.g. `.duelkick off`; the default is `on`)
 * `duelself`: Lets channel admins turn on or off the ability for users to duel themselves
               (e.g. `.duelself on`; emulates the original script)
 
