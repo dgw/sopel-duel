@@ -68,11 +68,13 @@ def duel(bot, channel, instigator, target, is_admin=False, warn_nonexistent=True
     now = time.time()
     bot.db.set_nick_value(instigator, 'duel_last', now)
     bot.db.set_channel_value(channel, 'duel_last', now)
+    winner_loss_streak = get_loss_streak(bot, winner)
     loser_win_streak = get_win_streak(bot, loser)
     duel_finished(bot, winner, loser)
     win_streak = get_win_streak(bot, winner)
     streak = ' (Streak: %d)' % win_streak if win_streak > 1 else ''
-    broken_streak = ', ending %s\'s streak of %d wins' % (loser, loser_win_streak) if loser_win_streak > 1 else ''
+    broken_streak = ', recovering from a streak of %d losses' % winner_loss_streak if winner_loss_streak > 1 else ''
+    broken_streak += ', ending %s\'s streak of %d wins' % (loser, loser_win_streak) if loser_win_streak > 1 else ''
     bot.say("%s wins%s!%s" % (winner, broken_streak, streak))
     if loser == target:
         kmsg = "%s done killed ya!" % instigator
