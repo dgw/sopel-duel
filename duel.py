@@ -21,7 +21,7 @@ def duel_cmd(bot, trigger):
     return duel(bot, trigger.sender, trigger.nick, trigger.group(3) or '', is_admin=trigger.admin)
 
 
-@module.rule('^(?:challenges|(?:fi(?:ght|te)|duel)s(?:\s+with)?)\s+([a-zA-Z0-9\[\]\\`_\^\{\|\}-]{1,32}).*')
+@module.rule(r'^(?:challenges|(?:fi(?:ght|te)|duel)s(?:\s+with)?)\s+([a-zA-Z0-9\[\]\\`_\^\{\|\}-]{1,32}).*')
 @module.intent('ACTION')
 @module.require_chanmsg
 def duel_action(bot, trigger):
