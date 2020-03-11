@@ -11,6 +11,15 @@ import time
 
 from sopel import module, tools
 
+try:
+    # to handle karma suffixes, if rep module is available
+    from sopel.modules.rep import verified_nick
+    print("Loaded verified_nick!")
+except ImportError:
+    # if rep module isn't available, we don't need to care about its suffixes
+    verified_nick = lambda s: s
+    print("verified_nick not available.")
+
 
 r_nick = r'[a-zA-Z0-9\[\]\\`_\^\{\|\}-]{1,32}'
 TIMEOUT = 600
@@ -387,17 +396,3 @@ def duel_finished(bot, winner, loser):
 
 def kicking_available(bot, channel):
     return get_duel_kicks(bot, channel) and bot.privileges[channel.lower()][bot.nick.lower()] >= module.OP
-
-
-def verified_nick(bot, nick, channel):
-    # Stolen and slightly modified from my sopel-rep plugin
-    nick = re.search(r'%s' % r_nick, nick)[0]
-    if not nick:
-        return ''  # returning None would mean the returned value can't be compared with ==
-    nick = Identifier(nick)
-    if nick.lower() not in bot.privileges[channel.lower()]:
-        if nick.endswith('--'):
-            if Identifier(nick[:-2]).lower() in bot.privileges[channel.lower()]:
-                return Identifier(nick[:-2])
-        return ''  # see above
-    return nick
