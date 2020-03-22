@@ -4,10 +4,15 @@ Copyright 2015 dgw
 """
 
 from __future__ import division
-from sopel import module, tools
+
 import random
+import re
 import time
 
+from sopel import module, tools
+
+
+r_nick = r'[a-zA-Z0-9\[\]\\`_\^\{\|\}-]{1,32}'
 TIMEOUT = 600
 
 WINS = 'win'
@@ -21,7 +26,7 @@ def duel_cmd(bot, trigger):
     return duel(bot, trigger.sender, trigger.nick, trigger.group(3) or '', is_admin=trigger.admin)
 
 
-@module.rule('^(?:challenges|(?:fi(?:ght|te)|duel)s(?:\s+with)?)\s+([a-zA-Z0-9\[\]\\`_\^\{\|\}-]{1,32}).*')
+@module.rule(r'^(?:challenges|(?:fi(?:ght|te)|duel)s(?:\s+with)?)\s+(%s).*' % r_nick)
 @module.intent('ACTION')
 @module.require_chanmsg
 def duel_action(bot, trigger):
@@ -29,7 +34,7 @@ def duel_action(bot, trigger):
 
 
 def duel(bot, channel, instigator, target, is_admin=False, warn_nonexistent=True):
-    target = tools.Identifier(target or '')
+    target = verified_nick(bot, target, channel)
     if not target:
         bot.reply("Who did you want to duel?")
         return module.NOLIMIT
@@ -382,3 +387,17 @@ def duel_finished(bot, winner, loser):
 
 def kicking_available(bot, channel):
     return get_duel_kicks(bot, channel) and bot.privileges[channel.lower()][bot.nick.lower()] >= module.OP
+
+
+def verified_nick(bot, nick, channel):
+    # Stolen and slightly modified from my sopel-rep plugin
+    nick = re.search(r'%s' % r_nick, nick).group(0)
+    if not nick:
+        return ''  # returning None would mean the returned value can't be compared with ==
+    nick = tools.Identifier(nick)
+    if nick.lower() not in bot.privileges[channel.lower()]:
+        if nick.endswith('--'):
+            if tools.Identifier(nick[:-2]).lower() in bot.privileges[channel.lower()]:
+                return tools.Identifier(nick[:-2])
+        return ''  # see above
+    return nick
