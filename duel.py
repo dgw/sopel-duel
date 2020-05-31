@@ -1,6 +1,6 @@
 """
 duel.py - clone of a mIRC script to let users duel each other
-Copyright 2015 dgw
+Copyright 2020 dgw
 """
 
 from __future__ import division
@@ -58,7 +58,7 @@ def duel(bot, channel, instigator, target, is_admin=False, warn_nonexistent=True
         return module.NOLIMIT
     time_since = time_since_duel(bot, channel, instigator)
     if time_since < TIMEOUT:
-        bot.notice("Next duel will be available in %d seconds." % (TIMEOUT - time_since), instigator)
+        bot.notice("Next duel will be available %s." % tools.time.seconds_to_human(-(TIMEOUT - time_since)), instigator)
         return module.NOLIMIT
     if is_admin and target_unduelable:
         bot.notice("Just so you know, %s is marked as unduelable." % target, instigator)
