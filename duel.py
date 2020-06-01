@@ -48,7 +48,7 @@ def duel(bot, channel, instigator, target, is_admin=False, warn_nonexistent=True
         if not get_self_duels(bot, channel):
             bot.say("You can't duel yourself, you coward!")
             return module.NOLIMIT
-    if target.lower() not in bot.privileges[channel.lower()]:
+    if target.lower() not in bot.channels[channel.lower()].privileges:
         if warn_nonexistent:
             bot.say("You can't duel people who don't exist!")
         return module.NOLIMIT
@@ -211,7 +211,7 @@ def duel_setting(bot, trigger):
             return module.NOLIMIT
         bot.say("%ss are %s in %s." % (setting.capitalize(), "enabled" if enable else "disabled", trigger.sender))
         return module.NOLIMIT
-    if not trigger.admin and bot.privileges[trigger.sender.lower()][trigger.nick.lower()] < module.ADMIN:
+    if not trigger.admin and bot.channels[trigger.sender.lower()].privileges[trigger.nick.lower()] < module.ADMIN:
         bot.reply("Only channel admins can change this setting.")
         return module.NOLIMIT
     # parse expected argument
@@ -386,7 +386,7 @@ def duel_finished(bot, winner, loser):
 
 
 def kicking_available(bot, channel):
-    return get_duel_kicks(bot, channel) and bot.privileges[channel.lower()][bot.nick.lower()] >= module.OP
+    return get_duel_kicks(bot, channel) and bot.channels[channel.lower()].privileges[bot.nick.lower()] >= module.OP
 
 
 def verified_nick(bot, nick, channel):
@@ -395,9 +395,9 @@ def verified_nick(bot, nick, channel):
     if not nick:
         return ''  # returning None would mean the returned value can't be compared with ==
     nick = tools.Identifier(nick)
-    if nick.lower() not in bot.privileges[channel.lower()]:
+    if nick.lower() not in bot.channels[channel.lower()].privileges:
         if nick.endswith('--'):
-            if tools.Identifier(nick[:-2]).lower() in bot.privileges[channel.lower()]:
+            if tools.Identifier(nick[:-2]).lower() in bot.channels[channel.lower()].privileges:
                 return tools.Identifier(nick[:-2])
         return ''  # see above
     return nick
