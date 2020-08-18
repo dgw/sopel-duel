@@ -5,6 +5,7 @@ Copyright 2020 dgw
 
 from __future__ import division
 
+import math
 import random
 import re
 import time
@@ -347,7 +348,7 @@ def time_since_duel(bot, channel, nick, nick_only=False):
         last = bot.db.get_channel_value(channel, 'duel_last') or 0
     else:
         last = bot.db.get_nick_value(nick, 'duel_last') or 0
-    return abs(now - last)
+    return math.ceil(abs(now - last))
 
 
 def update_duels(bot, nick, won=False):
