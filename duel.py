@@ -186,12 +186,14 @@ def unexclude(bot, trigger):
     bot.say("Enabled duels for %s." % target)
 
 
-@module.commands('duelself', 'duelcw', 'duelkick', 'duelkicks')
+@module.commands('dueling', 'duelself', 'duelcw', 'duelkick', 'duelkicks')
 @module.require_chanmsg
 def duel_setting(bot, trigger):
     cmd = trigger.group(1) or None
     arg = trigger.group(3) or None
-    if cmd == 'duelself':
+    if cmd == 'dueling':
+        setting = 'duel'
+    elif cmd == 'duelself':
         setting = 'self-duel'
     elif cmd == 'duelcw':
         setting = 'channel-wide duel'
@@ -201,7 +203,9 @@ def duel_setting(bot, trigger):
         bot.reply("Unknown setting command %s, exiting. Please report this to %s." % (cmd, bot.config.core.owner))
         return module.NOLIMIT
     if not arg:  # return current setting
-        if cmd == 'duelself':
+        if cmd == 'dueling':
+            enable = get_channel_duels(bot, trigger.sender)
+        elif cmd == 'duelself':
             enable = get_self_duels(bot, trigger.sender)
         elif cmd == 'duelcw':
             enable = get_duel_chanwide(bot, trigger.sender)
@@ -225,7 +229,9 @@ def duel_setting(bot, trigger):
         bot.reply("Invalid %s setting. Valid values: 'on', 'off'." % setting)
         return module.NOLIMIT
     pfx = 'en' if enable else 'dis'
-    if cmd == 'duelself':
+    if cmd == 'dueling':
+        set_channel_duels(bot, trigger.sender, enable)
+    elif cmd == 'duelself':
         set_self_duels(bot, trigger.sender, enable)
     elif cmd == 'duelcw':
         set_duel_chanwide(bot, trigger.sender, enable)
@@ -329,6 +335,11 @@ def get_unduelable(bot, nick):
     return bot.db.get_nick_value(nick, 'unduelable') or False
 
 
+def get_channel_duels(bot, channel):
+    duels = bot.db.get_channel_value(channel, 'duel_enabled')
+    return True if duels is None else duels
+
+
 def get_self_duels(bot, channel):
     return bot.db.get_channel_value(channel, 'enable_duel_self') or False
 
@@ -367,6 +378,10 @@ def update_duels(bot, nick, won=False):
 
 def set_unduelable(bot, nick, status=False):
     bot.db.set_nick_value(nick, 'unduelable', status)
+
+
+def set_channel_duels(bot, channel, status=True):
+    bot.db.set_channel_value(channel, 'duel_enabled', status)
 
 
 def set_self_duels(bot, channel, status=True):
