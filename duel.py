@@ -351,15 +351,19 @@ def time_since_duel(bot, channel, nick, nick_only=False):
     return math.ceil(abs(now - last))
 
 
-def update_duels(bot, nick, won=False):
+def update_duels(bot, nick, won=False, track_streak=True):
     wins, losses = get_duels(bot, nick)
     if won:
         bot.db.set_nick_value(nick, 'duel_wins', wins + 1)
+        if not track_streak:
+            return
         reset_loss_streak(bot, nick)
         set_streak_type(bot, nick, WINS)
         extend_win_streak(bot, nick)
     else:
         bot.db.set_nick_value(nick, 'duel_losses', losses + 1)
+        if not track_streak:
+            return
         reset_win_streak(bot, nick)
         set_streak_type(bot, nick, LOSSES)
         extend_loss_streak(bot, nick)
@@ -382,8 +386,9 @@ def set_duel_kicks(bot, channel, status=True):
 
 
 def duel_finished(bot, winner, loser):
-    update_duels(bot, winner, True)
-    update_duels(bot, loser, False)
+    track_streak = not is_self(bot, winner, loser)
+    update_duels(bot, winner, True, track_streak)
+    update_duels(bot, loser, False, track_streak)
 
 
 def kicking_available(bot, channel):
